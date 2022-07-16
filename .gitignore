@@ -1,0 +1,16 @@
+*.env
+*config.json
+.env
+!tsconfig.json
+
+build/
+
+.dockerignore
+Dockerfile
+
+node_modules/
+package-lock.json
+yarn.lock
+yarn-error.log
+
+logs/*
