@@ -1,5 +1,12 @@
 {
+  "main": "./build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc && node .",
+    "start": "node ."
+  },
   "dependencies": {
+    "dotenv": "^16.0.1",
     "eris": "^0.17.1",
     "ioredis": "^5.2.1",
     "winston": "^3.8.1"
