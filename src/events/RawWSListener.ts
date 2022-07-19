@@ -1,15 +1,14 @@
 import Eris from 'eris';
 
-import Lunary from '../Lunary';
 import EventListener from '../structures/EventListener';
 
 class RawWSListener extends EventListener {
-    constructor(client: Lunary) {
+    constructor(client: LunaryClient) {
         super(client, 'rawWS');
     }
 
     public async run(packet: Eris.RawPacket) {
-        console.log(packet)
+        // console.log(packet)
     }
 }
 

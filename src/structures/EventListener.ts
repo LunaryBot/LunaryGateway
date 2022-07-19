@@ -1,21 +1,19 @@
 import { ClientEvents } from 'eris';
 
-import Lunary from '../Lunary';
-
 type Events = keyof ClientEvents;
 
 class EventListener {
-    public readonly client: Lunary;
+    public readonly client: LunaryClient;
     public readonly events: Array<Events>;
     
-    constructor(client: Lunary, events: Events|Array<Events>) {
+    constructor(client: LunaryClient, events: Events|Array<Events>) {
         this.client = client;
 
         this.events = Array.isArray(events) ?  events : [events];
     }
 
     listen() {
-        this.events.map(eventName => {
+        this.events.forEach(eventName => {
             // @ts-ignore
             this.client.on(eventName, (...args) => this.run(...args));
         });
