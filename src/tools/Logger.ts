@@ -1,4 +1,4 @@
-import winston, { Logger, LeveledLogMethod } from 'winston';
+import winston from 'winston';
 import chalk from 'chalk';
 
 const { printf, combine, timestamp, colorize } = winston.format; 
