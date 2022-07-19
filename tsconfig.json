@@ -22,7 +22,13 @@
 		"moduleResolution": "node",
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "strictPropertyInitialization": false
+        "strictPropertyInitialization": false,
+        "baseUrl": "./src",
+        "paths": {
+            "@LunaryClient": ["./structures/LunaryClient"],
+            "@EventListener": ["./structures/EventListener"],
+            "@structures/*": ["./structures/*"]
+        }
     },
     "exclude": [
         "build",

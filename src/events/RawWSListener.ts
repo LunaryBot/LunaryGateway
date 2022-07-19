@@ -1,6 +1,6 @@
 import Eris from 'eris';
 
-import EventListener from '../structures/EventListener';
+import EventListener from '@EventListener';
 
 class RawWSListener extends EventListener {
     constructor(client: LunaryClient) {
