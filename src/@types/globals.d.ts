@@ -1,3 +1,7 @@
+import type { Logger } from 'winston';
+
+import LunaryClient from '../structures/LunaryClient'
+
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
@@ -8,6 +12,10 @@ declare global {
             readonly NODE_ENV: 'development' | 'production';
         }
     }
+
+    var logger: Logger;
+
+    type LunaryClient = LunaryClient;
 }
   
 export {};
