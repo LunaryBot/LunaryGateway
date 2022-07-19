@@ -3,8 +3,8 @@
   "license": "AGPL-3.0",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc && node .",
-    "start": "node ."
+    "dev": "tsc && TS_NODE_BASEURL=./build node -r tsconfig-paths/register .",
+    "start": "TS_NODE_BASEURL=./build node -r tsconfig-paths/register ."
   },
   "dependencies": {
     "dotenv": "^16.0.1",
