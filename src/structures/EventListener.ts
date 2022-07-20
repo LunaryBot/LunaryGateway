@@ -5,17 +5,25 @@ type Events = keyof ClientEvents;
 class EventListener {
     public readonly client: LunaryClient;
     public readonly events: Array<Events>;
+    public readonly multipleOnFunctions: boolean;
     
-    constructor(client: LunaryClient, events: Events|Array<Events>) {
+    constructor(client: LunaryClient, events: Events|Array<Events>, multipleOnFunctions = false) {
         this.client = client;
 
         this.events = Array.isArray(events) ?  events : [events];
+
+        this.multipleOnFunctions = multipleOnFunctions;
     }
 
     listen() {
         this.events.forEach(eventName => {
-            // @ts-ignore
-            this.client.on(eventName, (...args) => this.run(...args));
+            if(this.multipleOnFunctions) {
+                // @ts-ignore
+                this.client.on(eventName, (...args) => this[`on${eventName.toTitleCase()}`](...args));
+            } else {
+                // @ts-ignore
+                this.client.on(eventName, (...args) => this.on(...args));  
+            }
         });
     }
 }

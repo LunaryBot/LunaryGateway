@@ -7,7 +7,7 @@ class RawWSListener extends EventListener {
         super(client, 'rawWS');
     }
 
-    public async run(packet: Eris.RawPacket) {
+    public async on(packet: Eris.RawPacket) {
         // console.log(packet)
     }
 }
