@@ -18,26 +18,34 @@ const config = {
         http: 'blue',
         debug: 'yellow',
     }
-}
-
-const myFormat = printf(({ level, message, label, timestamp = new Date().toISOString(), details }) => {
-    return `${timestamp} ${level}  ${process.pid} --- ${label ? `[${chalk.cyan(label)}]:` : ''} ${message}${details ? `\n${details}` : ''}`;
-})
+};
 
 winston.addColors(config.colors);
 
 const logger = winston.createLogger({
-    format: combine(
-        colorize({ level: true }),
-        winston.format.simple(),
-        timestamp(),
-        myFormat,
-    ),
     levels: config.levels,
     level: 'info',
     transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'logs/combined.log' }),
+        new winston.transports.Console({ 
+            format: combine(
+                colorize({ level: true }),
+                winston.format.simple(),
+                timestamp(),
+                printf(({ level, message, label, timestamp = new Date().toISOString(), details }) => {
+                    return `${timestamp} ${level}  ${process.pid} --- ${label ? `[${chalk.cyan(label)}]:` : ''} ${message}${details ? `\n${details}` : ''}`;
+                }),
+            ),
+        }),
+        new winston.transports.File({ 
+            filename: 'logs/combined.log',
+            format: combine(
+                winston.format.simple(),
+                timestamp(),
+                printf(({ level, message, label, timestamp = new Date().toISOString(), details }) => {
+                    return `${timestamp} ${level}  ${process.pid} --- ${label ? `[${label}]:` : ''} ${message}${details ? `\n${details}` : ''}`;
+                }),
+            ),
+        }),
     ],
     exitOnError: false,
 });
