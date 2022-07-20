@@ -1,10 +1,14 @@
 import Eris from 'eris';
 import fs from 'fs';
+import Redis from 'ioredis';
 
 import EventListener from './EventListener';
 
 class Lunary extends Eris.Client {
-    public events: Array<EventListener>;
+    public events: Array<EventListener> = [];
+    public redis: Redis = new Redis(process.env.REDIS_URL, {
+        connectTimeout: 3000,
+    });
 
     constructor() {
         super(
@@ -23,8 +27,6 @@ class Lunary extends Eris.Client {
             messageLimit: 20,
             defaultImageFormat: 'png',
         });
-
-        this.events = [];
     }
 
     private async _loadListeners(): Promise<EventListener[]> {
