@@ -5,7 +5,7 @@ class RawWSListener extends EventListener {
         super(client, 'ready');
     }
 
-    public async run() {
+    public async on() {
         logger.info(`Bot is running on port ${this.client.user.username}#${this.client.user.discriminator} (ID: ${this.client.user.id})`, { label: 'Lunary' });
     }
 }
