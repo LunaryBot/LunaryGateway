@@ -1,6 +1,6 @@
 import type { Logger } from 'winston';
 
-import LunaryClient from '../structures/LunaryClient'
+import _LunaryClient from '../structures/LunaryClient'
 
 declare global {
     namespace NodeJS {
@@ -9,13 +9,22 @@ declare global {
             readonly DISCORD_CLIENT_TOKEN: string;
             readonly DISCORD_CLIENT_ID: string;
 
+            // Redis
+            readonly REDIS_URL: string;
+
             readonly NODE_ENV: 'development' | 'production';
         }
     }
 
+    interface String {
+        shorten(length: number): string;
+        toTitleCase(): string;
+        checkSimilarityStrings(string: string): number;
+    }
+
     var logger: Logger;
 
-    type LunaryClient = LunaryClient;
+    type LunaryClient = _LunaryClient;
 }
   
 export {};

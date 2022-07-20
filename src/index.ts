@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import './tools/Logger'
+import './tools/String';
+import './tools/Logger';
 
 import Lunary from './structures/LunaryClient';
 
