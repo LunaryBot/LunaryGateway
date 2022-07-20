@@ -1,6 +1,6 @@
 import type { Logger } from 'winston';
 
-import _LunaryClient from '../structures/LunaryClient'
+import _LunaryClient from '../structures/LunaryClient';
 
 declare global {
     namespace NodeJS {

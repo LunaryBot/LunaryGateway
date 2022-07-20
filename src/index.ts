@@ -5,9 +5,9 @@ import './tools/Logger';
 import Lunary from './structures/LunaryClient';
 
 async function main() {
-    const client = new Lunary();
+	const client = new Lunary();
 
-    await client.init();
+	await client.init();
 }
 
 main();
