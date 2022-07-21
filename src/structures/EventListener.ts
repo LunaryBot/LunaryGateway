@@ -8,7 +8,11 @@ class EventListener {
 	public readonly multipleOnFunctions: boolean;
     
 	constructor(client: LunaryClient, events: Events|Array<Events>, multipleOnFunctions = false) {
-		this.client = client;
+		Object.defineProperty(this, 'client', {
+			value: client,
+			enumerable: false,
+			writable: false,
+		});
 
 		this.events = Array.isArray(events) ?  events : [events];
 
