@@ -2,17 +2,20 @@ import Eris from 'eris';
 import fs from 'fs';
 import Redis from 'ioredis';
 
-import EventListener from './EventListener';
+import EventListener from '@EventListener';
+import CacheControl from './CacheControl';
 
 class Lunary extends Eris.Client {
 	public events: Array<EventListener> = [];
 	public redis: Redis = new Redis(process.env.REDIS_URL, {
 		connectTimeout: 3000,
 	});
+	public cacheControl: CacheControl;
 
 	constructor() {
 		super(
-			process.env.DISCORD_CLIENT_TOKEN, {
+			process.env.DISCORD_CLIENT_TOKEN, 
+			{
 				intents: ['guilds', 'guildMembers', 'guildBans', 'guildIntegrations', 'guildWebhooks', 'guildVoiceStates', 'guildMessages', 'guildMessageReactions'],
 				allowedMentions: {
 					everyone: false,
@@ -26,7 +29,10 @@ class Lunary extends Eris.Client {
 				},
 				messageLimit: 20,
 				defaultImageFormat: 'png',
-			});
+			}
+		);
+
+		this.cacheControl = new CacheControl(this);
 	}
 
 	private async _loadListeners(): Promise<EventListener[]> {
