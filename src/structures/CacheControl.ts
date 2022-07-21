@@ -28,18 +28,6 @@ class CacheControl {
 		await this.client.redis.del(`guilds:${guildId}`);
 	}
 
-	async setRoles(guildId: string, roles: APIRole[]) {
-		const resolvedRoles = roles.map(role => {
-			delete role.unicode_emoji;
-			delete role.icon;
-			delete role.tags;
-
-			return role;
-		});
-        
-		await this.client.redis.set(`guilds:${guildId}:roles`, JSON.stringify(resolvedRoles));
-	}
-
 	async setGuildChannels(guildId: string, channels: APIChannel[]) {
 		const resolvedChannels = channels.map(channel => {
 			const data: any = {
@@ -58,6 +46,18 @@ class CacheControl {
 		});
 
 		await this.client.redis.set(`guilds:${guildId}:channels`, JSON.stringify(resolvedChannels));
+	}
+
+	async setGuildRoles(guildId: string, roles: APIRole[]) {
+		const resolvedRoles = roles.map(role => {
+			delete role.unicode_emoji;
+			delete role.icon;
+			delete role.tags;
+
+			return role;
+		});
+        
+		await this.client.redis.set(`guilds:${guildId}:roles`, JSON.stringify(resolvedRoles));
 	}
 }
 
