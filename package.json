@@ -7,6 +7,7 @@
     "start": "TS_NODE_BASEURL=./build node -r tsconfig-paths/register ."
   },
   "dependencies": {
+    "discord-api-types": "^0.36.2",
     "dotenv": "^16.0.1",
     "eris": "^0.17.1",
     "ioredis": "^5.2.1",
