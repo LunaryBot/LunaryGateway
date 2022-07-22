@@ -1,4 +1,4 @@
-import { APIChannel, APIGuild, APIRole, APITextChannel } from 'discord-api-types/v10';
+import { APIChannel, APIGuild, APIMessage, APIRole, APITextChannel, APIUser } from 'discord-api-types/v10';
 
 class CacheControl {
 	public readonly client: LunaryClient;
@@ -9,6 +9,23 @@ class CacheControl {
 			enumerable: false,
 			writable: false,
 		});
+	}
+
+	async setChannelMessages(channelId: string, messages: APIMessage[]) {
+		const resolvedMessages = messages.map(message => {
+			// @ts-ignore
+			delete message.channel_id;
+
+			delete message.interaction;
+
+			return message;
+		}).sort((a, b) => Number(a.timestamp) - Number(b.timestamp)).slice(0, 20);
+
+		await this.client.redis.set(`channels:${channelId}:messages`, JSON.stringify(resolvedMessages));
+	}
+
+	async deleteGuild(guildId: string) {
+		await this.client.redis.del(`guilds:${guildId}`);
 	}
 
 	async setGuild(guild: APIGuild) {
@@ -22,10 +39,6 @@ class CacheControl {
 		};
         
 		await this.client.redis.set(`guilds:${guild.id}`, JSON.stringify(resolvedGuild));
-	}
-
-	async deleteGuild(guildId: string) {
-		await this.client.redis.del(`guilds:${guildId}`);
 	}
 
 	async setGuildChannels(guildId: string, channels: APIChannel[]) {
@@ -43,6 +56,8 @@ class CacheControl {
 			if('nsfw' in channel) {
 				data.nsfw = channel.nsfw ?? false;
 			}
+
+			return data;
 		});
 
 		await this.client.redis.set(`guilds:${guildId}:channels`, JSON.stringify(resolvedChannels));
@@ -58,6 +73,10 @@ class CacheControl {
 		});
         
 		await this.client.redis.set(`guilds:${guildId}:roles`, JSON.stringify(resolvedRoles));
+	}
+
+	async setUser(user: APIUser) {
+		await this.client.redis.set(`users:${user.id}`, JSON.stringify(user));
 	}
 }
 
