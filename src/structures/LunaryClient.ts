@@ -10,6 +10,7 @@ class Lunary extends Eris.Client {
 	public redis: Redis = new Redis(process.env.REDIS_URL, {
 		connectTimeout: 3000,
 	});
+
 	public cacheControl: CacheControl;
 
 	constructor() {
@@ -37,13 +38,13 @@ class Lunary extends Eris.Client {
 
 	private async _loadListeners(): Promise<EventListener[]> {
 		const regex = /^(.*)Listener\.(t|j)s$/;
-		let events = fs.readdirSync(__dirname + '/../events').filter(file => regex.test(file));
+		const events = fs.readdirSync(__dirname + '/../events').filter(file => regex.test(file));
 
 		const eventsName: Array<string> = [];
-		for (let event of events) {
-			const { default: base } = require(__dirname + `/../events/${event}`);
+		for(const event of events) {
+			const { default: Base } = require(__dirname + `/../events/${event}`);
             
-			const instance = new base(this) as EventListener;
+			const instance = new Base(this) as EventListener;
 
 			this.events.push(instance);
 
