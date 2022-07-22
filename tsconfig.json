@@ -27,7 +27,8 @@
         "paths": {
             "@LunaryClient": ["./structures/LunaryClient"],
             "@EventListener": ["./structures/EventListener"],
-            "@structures/*": ["./structures/*"]
+            "@structures/*": ["./structures/*"],
+            "@utils/*": ["./utils/*"],
         }
     },
     "exclude": [

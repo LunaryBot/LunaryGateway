@@ -1,87 +1,62 @@
 import Eris from 'eris';
-import { APIChannel, GatewayChannelCreateDispatchData, GatewayChannelUpdateDispatchData, GatewayDispatchEvents, GatewayGuildCreateDispatch, GatewayGuildCreateDispatchData, GatewayMessageCreateDispatchData } from 'discord-api-types/v10';
+import { GatewayDispatchEvents } from 'discord-api-types/v10';
 
 import EventListener from '@EventListener';
 
+import RawHandles from '@utils/RawHandles';
+
+type PacketHandle = { packets: Array<GatewayDispatchEvents>, handler: (...args: any[]) => Promise<void> };
+
 class RawWSListener extends EventListener {
-	public readonly packetsName = [
-		GatewayDispatchEvents.GuildCreate, 
-		GatewayDispatchEvents.GuildUpdate, 
-		GatewayDispatchEvents.GuildDelete,
-		GatewayDispatchEvents.ChannelCreate,
-		GatewayDispatchEvents.ChannelUpdate,
-		GatewayDispatchEvents.ChannelDelete,
-		GatewayDispatchEvents.MessageCreate,
-		GatewayDispatchEvents.MessageUpdate,
-		GatewayDispatchEvents.MessageDelete,
-	];
+	public readonly packetsHandle: Array<PacketHandle>;
+	public readonly packetsName: Array<GatewayDispatchEvents>;
+	public readonly rawHandle: RawHandles;
 
 	constructor(client: LunaryClient) {
 		super(client, 'rawWS');
+
+		this.rawHandle = new RawHandles(client);
+
+		this.packetsHandle = [
+			{
+				packets: [
+					GatewayDispatchEvents.GuildCreate, 
+					GatewayDispatchEvents.GuildUpdate, 
+					GatewayDispatchEvents.GuildDelete,
+				],
+				handler: this.rawHandle.handleGuild.bind(this.rawHandle),
+			},
+			{
+				packets: [
+					GatewayDispatchEvents.ChannelCreate,
+					GatewayDispatchEvents.ChannelUpdate,
+					GatewayDispatchEvents.ChannelDelete,
+				],
+				handler: this.rawHandle.handleChannel.bind(this.rawHandle),
+			},
+			{
+				packets: [
+					GatewayDispatchEvents.GuildRoleCreate,
+					GatewayDispatchEvents.GuildRoleUpdate,
+					GatewayDispatchEvents.GuildRoleDelete,
+				],
+				handler: this.rawHandle.handleGuildRoles.bind(this.rawHandle),
+			},
+		];
+
+		this.packetsName = this.packetsHandle.map(({ packets }) => packets).flat();
 	}
 
 	public async on(packet: Eris.RawPacket) {
-		if(!packet.t || !this.packetsName.includes(packet.t as any)) return;
+		if(!this.packetsName.includes(packet.t as any)) return;
 
-		// Guilds
-		if([GatewayDispatchEvents.GuildCreate, GatewayDispatchEvents.GuildUpdate].includes(packet.t as any)) {
-			await this.client.cacheControl.setGuild(packet.d as any);
+		const { handler } = this.packetsHandle.find(p => p.packets.includes(packet.t as any)) as PacketHandle;
 
-			if(packet.t === GatewayDispatchEvents.GuildCreate) {
-				const { id: guildId, channels } = packet.d as GatewayGuildCreateDispatchData;
+		if(!handler) return;
 
-				await this.client.cacheControl.setGuildChannels(guildId, channels);
-			}
+		logger.info(`@${packet.t?.split(/$.|_/).map((x, i) => x.charAt(0).toUpperCase()+x.slice(1).toLowerCase()).join('')}`, { label: `${process.env.CLUSTER_ID ?? 0}, Lunary, RawWSListener` });
 
-			console.log(`${packet.t}: ${(packet.d as any).name} (${(packet.d as any).id})`);
-		}
-
-		if(packet.t === GatewayDispatchEvents.GuildDelete) {
-			await this.client.cacheControl.deleteGuild((packet.d as any).id);
-			
-			console.log(`${packet.t}: ${(packet.d as any).name} (${(packet.d as any).id})`);
-		}
-
-		// Channels
-		if([GatewayDispatchEvents.ChannelCreate, GatewayDispatchEvents.ChannelUpdate].includes(packet.t as any)) {
-			const guildId = (packet.d as any).guild_id;
-
-			const channels = (await this.client.redis.get(`guilds:${guildId}:channels`) || []) as Array<APIChannel>;
-			
-			console.log(`${packet.t}: ${(packet.d as any).name} (${(packet.d as any).id})`);
-
-			console.log(packet.d);
-
-			const channel = (packet.d as GatewayChannelUpdateDispatchData);
-
-			if(packet.t === GatewayDispatchEvents.ChannelUpdate) {
-				const channelId = channel.id;
-				const channelIndex = channels.findIndex(c => c.id === channelId);
-
-				if(channelIndex === -1) return;
-
-				channels[channelIndex] = channel;
-			} else {
-				channels.push(channel);
-			}
-
-			await this.client.cacheControl.setGuildChannels(guildId, channels);
-		}
-
-		if(packet.t === GatewayDispatchEvents.ChannelDelete) {
-			const guildId = (packet.d as any).guild_id;
-
-			const channels = (await this.client.redis.get(`guilds:${guildId}:channels`) || []) as Array<APIChannel>;
-			
-			const channelId = (packet.d as any).id;
-			const channelIndex = channels.findIndex(c => c.id === channelId);
-
-			if(channelIndex === -1) return;
-
-			channels.splice(channelIndex, 1);
-
-			await this.client.cacheControl.setGuildChannels(guildId, channels);
-		}
+		await handler(packet);
 	}
 }
 
