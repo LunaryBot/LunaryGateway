@@ -26,7 +26,7 @@ class Lunary extends Eris.Client {
 				},
 				restMode: true,
 				rest: {
-					baseURL: '/api/v10'
+					baseURL: '/api/v10',
 				},
 				messageLimit: 20,
 				defaultImageFormat: 'png',
