@@ -1,3 +1,4 @@
+import CacheControl from '@structures/CacheControl';
 import { 
 	GatewayDispatchEvents,
 	GatewayChannelCreateDispatch,
@@ -16,6 +17,7 @@ import {
 	APITextChannel,
 	APIRole,
 	APIMessage,
+	APIGuild,
 } from 'discord-api-types/v10';
 
 type GatewayChannelEvents = GatewayChannelCreateDispatch | GatewayChannelUpdateDispatch | GatewayChannelDeleteDispatch;
@@ -44,16 +46,24 @@ class RawHandles {
 			return;
 		}
 
-		const channels = JSON.parse((await this.client.redis.get(`guilds:${guildId}:channels`).catch(() => null) || JSON.stringify([]))) as Array<APITextChannel>;
+		const guild = await this.client.cacheControl.getGuild(guildId);
+
+		const channels = guild.channels;
 
 		const channelIndex = channels.findIndex(c => c.id === channel.id);
 
 		if(channelIndex === -1) {
-			channels.push(channel);
+			channels.push(CacheControl.resolveChannels([channel])[0]);
+
+			logger.info(`Channel ${channel.id} added to guild ${guildId}`);
 		} else if(packet.t === GatewayDispatchEvents.ChannelUpdate) {
-			channels[channelIndex] = channel;
+			channels[channelIndex] = CacheControl.resolveChannels([channel])[0];
+
+			logger.info(`Channel ${channel.id} updated in guild ${guildId}`);
 		} else if(packet.t === GatewayDispatchEvents.ChannelDelete) {
 			channels.splice(channelIndex, 1);
+
+			logger.info(`Channel ${channel.id} deleted from guild ${guildId}`);
 		}
 
 		await this.client.cacheControl.setGuildChannels(guildId, channels);
@@ -75,7 +85,7 @@ class RawHandles {
 		return result;
 	}
 
-	public async handleGuildRoles(packet: GatewayGuildRolesEvents) {
+	public async handleGuildRoles(packet: GatewayGuildRolesEvents, guild?: APIGuild) {
 		const { guild_id: guildId } = packet.d;
 
 		let role: APIRole;
@@ -86,7 +96,7 @@ class RawHandles {
 			role = packet.d.role;
 		}
 
-		const roles = JSON.parse((await this.client.redis.get(`guilds:${guildId}:roles`).catch(() => null) || JSON.stringify([]))) as Array<APIRole>;
+		const roles = ((guild ?? JSON.parse((await this.client.redis.get(`guilds:${guildId}`).catch(() => null) || JSON.stringify({}))) ?? {}).roles ?? []) as Array<APIRole>;
 
 		const roleIndex = roles.findIndex(r => r.id === role.id);
 
