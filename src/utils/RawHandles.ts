@@ -10,6 +10,9 @@ import {
 	GatewayGuildRoleCreateDispatch,
 	GatewayGuildRoleUpdateDispatch,
 	GatewayGuildRoleDeleteDispatch,
+	GatewayGuildMemberAddDispatch,
+	GatewayGuildMemberUpdateDispatch,
+	GatewayGuildMemberRemoveDispatch,
 	GatewayMessageCreateDispatch,
 	GatewayMessageUpdateDispatch,
 	GatewayMessageDeleteDispatch,
@@ -18,12 +21,14 @@ import {
 	APIRole,
 	APIMessage,
 	APIGuild,
+	APIGuildMember,
 } from 'discord-api-types/v10';
 
 type GatewayChannelEvents = GatewayChannelCreateDispatch | GatewayChannelUpdateDispatch | GatewayChannelDeleteDispatch;
 
 type GatewayGuildEvents = GatewayGuildCreateDispatch | GatewayGuildUpdateDispatch | GatewayGuildDeleteDispatch;
 type GatewayGuildRolesEvents = GatewayGuildRoleCreateDispatch | GatewayGuildRoleUpdateDispatch | GatewayGuildRoleDeleteDispatch;
+type GatewayGuildMembersEvents = GatewayGuildMemberAddDispatch | GatewayGuildMemberUpdateDispatch | GatewayGuildMemberRemoveDispatch;
 
 type GatewayMessageEvents = GatewayMessageCreateDispatch | GatewayMessageUpdateDispatch | GatewayMessageDeleteDispatch;
 
@@ -122,7 +127,7 @@ class RawHandles {
 
 		let messageFinded = true;
 
-		if(messageIndex !== -1 || packet.t === GatewayDispatchEvents.MessageCreate) {
+		if(messageIndex !== -1 || packet.t == GatewayDispatchEvents.MessageCreate) {
 			if(packet.t === GatewayDispatchEvents.MessageCreate) {
 				messages.push(message as APIMessage);
 			} else if(packet.t === GatewayDispatchEvents.MessageUpdate) {
@@ -149,6 +154,29 @@ class RawHandles {
 		const user = packet.d;
 
 		await this.client.cacheControl.setUser(user);
+	}
+
+	public async handleGuildMember(packet: GatewayGuildMembersEvents) {
+		const { guild_id: guildId, user, ...data } = packet.d;
+		
+		if(user) await this.client.cacheControl.setUser(user);
+
+		switch (packet.t) {
+			case GatewayDispatchEvents.GuildMemberAdd:
+			case GatewayDispatchEvents.GuildMemberUpdate: {
+				const member = data as APIGuildMember;
+
+				await this.client.cacheControl.setGuildMember(guildId, user?.id as string, member);
+				
+				break;
+			}
+
+			case GatewayDispatchEvents.GuildMemberRemove: {
+				await this.client.cacheControl.deleteGuildMember(guildId, user?.id as string);
+
+				break;
+			}
+		}
 	}
 }
 

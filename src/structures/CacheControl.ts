@@ -1,4 +1,4 @@
-import { APIChannel, APIGuild, APIMessage, APIRole, APITextChannel, APIUser } from 'discord-api-types/v10';
+import { APIChannel, APIGuild, APIGuildMember, APIMessage, APIRole, APITextChannel, APIUser } from 'discord-api-types/v10';
 
 type Channel = Pick<APIChannel, 'id' | 'name' | 'type'> & { position?: number, parent_id?: string, nsfw?: boolean };
 type Guild = Pick<APIGuild, 'id' | 'name' | 'icon' | 'features' | 'banner'> & { ownerId: string, roles: Array<Role>, channels: Array<Channel> };
@@ -21,6 +21,8 @@ class CacheControl {
 			delete message.channel_id;
 
 			delete message.interaction;
+		
+			this.setUser(message.author);
 
 			return message;
 		}).sort((a, b) => Number(a.timestamp) - Number(b.timestamp)).slice(0, 20);
@@ -73,6 +75,16 @@ class CacheControl {
 		guild.channels = resolvedChannels;
 
 		await this.setGuild(guild);
+	}
+
+	async setGuildMember(guildId: string, userId: string, member: APIGuildMember) {
+		delete member.user;
+
+		await this.client.redis.set(`guilds:${guildId}:members:${userId == this.client.user.id ? '@me' : userId}`, JSON.stringify(member));
+	}
+	
+	async deleteGuildMember(guildId: string, userId: string) {
+		await this.client.redis.del(`guilds:${guildId}:members:${userId}`);
 	}
 
 	async setGuildRoles(guildId: string, roles: Array<APIRole|Role>, guild: Guild = null as any) {
