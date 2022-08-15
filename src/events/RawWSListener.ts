@@ -50,6 +50,14 @@ class RawWSListener extends EventListener {
 				],
 				handler: this.rawHandle.handleGuildMember.bind(this.rawHandle),
 			},
+			{
+				packets: [
+					GatewayDispatchEvents.MessageCreate,
+					GatewayDispatchEvents.MessageUpdate,
+					GatewayDispatchEvents.MessageDelete,
+				],
+				handler: this.rawHandle.handleMessage.bind(this.rawHandle),
+			},
 		];
 
 		this.packetsName = this.packetsHandle.map(({ packets }) => packets).flat();

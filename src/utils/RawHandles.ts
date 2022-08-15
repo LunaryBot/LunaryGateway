@@ -83,8 +83,8 @@ class RawHandles {
 
 		const result = await this.client.cacheControl.setGuild(guild);
 
-		if(type == GatewayDispatchEvents.GuildCreate) {
-			await this.client.cacheControl.setGuildChannels(guild.id, guild.channels);
+		if(type == GatewayDispatchEvents.GuildCreate && guild.members?.length > 0) {
+			guild.members.forEach(member => this.client.cacheControl.setGuildMember(guild.id, member.user?.id as string, member));
 		}
 
 		return result;

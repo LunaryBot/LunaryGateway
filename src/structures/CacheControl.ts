@@ -1,7 +1,7 @@
 import { APIChannel, APIGuild, APIGuildMember, APIMessage, APIRole, APITextChannel, APIUser } from 'discord-api-types/v10';
 
 type Channel = Pick<APIChannel, 'id' | 'name' | 'type'> & { position?: number, parent_id?: string, nsfw?: boolean };
-type Guild = Pick<APIGuild, 'id' | 'name' | 'icon' | 'features' | 'banner'> & { ownerId: string, roles: Array<Role>, channels: Array<Channel> };
+type Guild = Pick<APIGuild, 'id' | 'name' | 'icon' | 'features' | 'banner'> & { owner_id: string, roles: Array<Role>, channels: Array<Channel> };
 type Role = Pick<APIRole, 'id' | 'name' | 'color' | 'hoist' | 'permissions' | 'position'>;
 
 class CacheControl {
@@ -49,10 +49,12 @@ class CacheControl {
 			id: guild.id,
 			name: guild.name,
 			icon: guild.icon,
-			ownerId: (guild as Guild).ownerId ?? (guild as APIGuild).owner_id,
+			owner_id: (guild as Guild).owner_id || (guild as APIGuild).owner_id as string,
 			features: guild.features,
 			banner: guild.banner,
 		};
+
+		console.log(resolvedGuild);
 
 		if(guild.roles) {
 			resolvedGuild.roles = CacheControl.resolveRoles(guild.roles);
