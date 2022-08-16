@@ -1,8 +1,9 @@
-import { APIChannel, APIGuild, APIGuildMember, APIMessage, APIRole, APITextChannel, APIUser } from 'discord-api-types/v10';
+import { APIChannel, APIGuild, APIGuildMember, APIMessage, APIRole, APIUser } from 'discord-api-types/v10';
 
 type Channel = Pick<APIChannel, 'id' | 'name' | 'type'> & { position?: number, parent_id?: string, nsfw?: boolean };
 type Guild = Pick<APIGuild, 'id' | 'name' | 'icon' | 'features' | 'banner'> & { owner_id: string, roles: Array<Role>, channels: Array<Channel> };
 type Role = Pick<APIRole, 'id' | 'name' | 'color' | 'hoist' | 'permissions' | 'position'>;
+type Message = Omit<APIMessage, 'activity' | 'application' | 'author' | 'channel_id' | 'interaction'> & { author_id: string, guild_id?: string };
 
 class CacheControl {
 	public readonly client: LunaryClient;
@@ -15,17 +16,36 @@ class CacheControl {
 		});
 	}
 
-	async setChannelMessages(channelId: string, messages: APIMessage[]) {
-		const resolvedMessages = messages.map(message => {
-			// @ts-ignore
-			delete message.channel_id;
+	async setChannelMessages(channelId: string, messages: Array<APIMessage & { guild_id?: string, member?: APIGuildMember }>) {
+		const resolvedMessages: Message[] = (await Promise.all(messages.map(async message => {
+			console.log(message.author);
 
-			delete message.interaction;
-		
-			this.setUser(message.author);
+			const data = {
+				...message,
+				// @ts-ignore
+				author_id: message.author_id || message.author.id,
+			} as Partial<APIMessage> & { guild_id?: string,  member?: APIGuildMember };
 
-			return message;
-		}).sort((a, b) => Number(a.timestamp) - Number(b.timestamp)).slice(0, 20);
+			if(message.author) await this.setUser(message.author);
+
+			if(message.guild_id && message.member) await this.setGuildMember(message.guild_id, message.author.id, message.member);
+			
+			delete data.activity;
+
+			delete data.application;
+
+			delete data.author;
+			
+			delete data.channel_id;
+
+			delete data.interaction;
+			
+			delete data.member;
+
+			delete data.nonce;
+
+			return data as Message;
+		}))).sort((a, b) => Number(a.timestamp) - Number(b.timestamp)).slice(0, 20);
 
 		await this.client.redis.set(`channels:${channelId}:messages`, JSON.stringify(resolvedMessages));
 	}
@@ -53,8 +73,6 @@ class CacheControl {
 			features: guild.features,
 			banner: guild.banner,
 		};
-
-		console.log(resolvedGuild);
 
 		if(guild.roles) {
 			resolvedGuild.roles = CacheControl.resolveRoles(guild.roles);

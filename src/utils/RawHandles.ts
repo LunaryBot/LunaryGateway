@@ -126,14 +126,17 @@ class RawHandles {
 		if(messageIndex === -1 && packet.t != GatewayDispatchEvents.MessageCreate) return;
 
 		let messageFinded = true;
-
+		
 		if(messageIndex !== -1 || packet.t == GatewayDispatchEvents.MessageCreate) {
+			// @ts-ignore
+			message.guild_id = guildId;
+			
 			if(packet.t === GatewayDispatchEvents.MessageCreate) {
 				messages.push(message as APIMessage);
 			} else if(packet.t === GatewayDispatchEvents.MessageUpdate) {
 				messages[messageIndex] = message as APIMessage;
 			} else if(packet.t === GatewayDispatchEvents.MessageDelete) {
-				messages.splice(messageIndex, 1);
+				messages[messageIndex] = { ...messages[messageIndex], deleted: true } as APIMessage;
 			}
 		} else {
 			messageFinded = false;
