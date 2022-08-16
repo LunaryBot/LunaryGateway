@@ -3,7 +3,7 @@ import { APIChannel, APIGuild, APIGuildMember, APIMessage, APIRole, APIUser } fr
 type Channel = Pick<APIChannel, 'id' | 'name' | 'type'> & { position?: number, parent_id?: string, nsfw?: boolean };
 type Guild = Pick<APIGuild, 'id' | 'name' | 'icon' | 'features' | 'banner'> & { owner_id: string, roles: Array<Role>, channels: Array<Channel> };
 type Role = Pick<APIRole, 'id' | 'name' | 'color' | 'hoist' | 'permissions' | 'position'>;
-type Message = Omit<APIMessage, 'activity' | 'application' | 'author' | 'channel_id' | 'interaction'> & { author_id: string, guild_id?: string };
+type Message = Omit<APIMessage, 'activity' | 'application' | 'author' | 'channel_id' | 'interaction' | 'referenced_message'> & { author_id: string, guild_id?: string };
 
 class CacheControl {
 	public readonly client: LunaryClient;
@@ -27,6 +27,21 @@ class CacheControl {
 			if(message.author) await this.setUser(message.author);
 
 			if(message.guild_id && message.member) await this.setGuildMember(message.guild_id, message.author.id, message.member);
+
+			if(data.referenced_message) {
+				const { referenced_message } = data;
+
+				data.referenced_message = {
+					content: referenced_message.content,
+					author_id: referenced_message.author.id,
+					attachments: referenced_message.attachments,
+					embeds: referenced_message.embeds,
+					id: referenced_message.id,
+					author: referenced_message.author,
+				} as APIMessage & { author_id: string };
+
+				await this.setUser(referenced_message.author);
+			}
 			
 			delete data.activity;
 
@@ -41,6 +56,8 @@ class CacheControl {
 			delete data.member;
 
 			delete data.nonce;
+
+			delete data.referenced_message;
 
 			return data as Message;
 		}))).sort((a, b) => Number(a.timestamp) - Number(b.timestamp)).slice(0, 20);

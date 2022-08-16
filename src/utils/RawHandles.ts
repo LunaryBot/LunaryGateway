@@ -142,7 +142,7 @@ class RawHandles {
 			messageFinded = false;
 		}
 
-		if(packet.t != GatewayDispatchEvents.MessageDelete) {
+		if(packet.t != GatewayDispatchEvents.MessageDelete && (message as APIMessage).author) {
 			const { author } = message as APIMessage;
 
 			await this.client.cacheControl.setUser(author);
