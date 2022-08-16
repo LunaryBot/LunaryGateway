@@ -18,8 +18,6 @@ class CacheControl {
 
 	async setChannelMessages(channelId: string, messages: Array<APIMessage & { guild_id?: string, member?: APIGuildMember }>) {
 		const resolvedMessages: Message[] = (await Promise.all(messages.map(async message => {
-			console.log(message.author);
-
 			const data = {
 				...message,
 				// @ts-ignore
