@@ -58,11 +58,11 @@ class RawHandles {
 		const channelIndex = channels.findIndex(c => c.id === channel.id);
 
 		if(channelIndex === -1) {
-			channels.push(CacheControl.resolveChannels([channel])[0]);
+			channels.push(channel as any);
 
 			logger.info(`Channel ${channel.id} added to guild ${guildId}`);
 		} else if(packet.t === GatewayDispatchEvents.ChannelUpdate) {
-			channels[channelIndex] = CacheControl.resolveChannels([channel])[0];
+			channels[channelIndex] = channel as any;
 
 			logger.info(`Channel ${channel.id} updated in guild ${guildId}`);
 		} else if(packet.t === GatewayDispatchEvents.ChannelDelete) {

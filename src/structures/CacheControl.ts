@@ -1,3 +1,4 @@
+import { ChannelSchema, GuildSchema, RoleSchema } from '@utils/schemas';
 import { APIChannel, APIGuild, APIGuildMember, APIMessage, APIRole, APIUser } from 'discord-api-types/v10';
 
 type Channel = Pick<APIChannel, 'id' | 'name' | 'type'> & { position?: number, parent_id?: string, nsfw?: boolean };
@@ -80,22 +81,7 @@ class CacheControl {
 	}
 
 	async setGuild(guild: (APIGuild & { channels?: Array<APIChannel> }) | Guild) {
-		const resolvedGuild: Partial<Guild> = {
-			id: guild.id,
-			name: guild.name,
-			icon: guild.icon,
-			owner_id: (guild as Guild).owner_id || (guild as APIGuild).owner_id as string,
-			features: guild.features,
-			banner: guild.banner,
-		};
-
-		if(guild.roles) {
-			resolvedGuild.roles = CacheControl.resolveRoles(guild.roles);
-		}
-
-		if(guild.channels) {
-			resolvedGuild.channels = CacheControl.resolveChannels(guild.channels);
-		}
+		const resolvedGuild: Partial<Guild> = GuildSchema.parse(guild) as any;
         
 		await this.client.redis.set(`guilds:${guild.id}`, JSON.stringify(resolvedGuild));
 	}
@@ -105,7 +91,7 @@ class CacheControl {
 			guild = await this.getGuild(guildId);
 		}
 
-		const resolvedChannels = CacheControl.resolveChannels(channels);
+		const resolvedChannels = ChannelSchema.parse(channels) as any;
 
 		guild.channels = resolvedChannels;
 
@@ -127,7 +113,7 @@ class CacheControl {
 			guild = await this.getGuild(guildId);
 		}
 
-		const resolvedRoles = CacheControl.resolveRoles(roles);
+		const resolvedRoles = RoleSchema.parse(roles) as any;
 
 		guild.roles = resolvedRoles;
 
@@ -136,43 +122,6 @@ class CacheControl {
 
 	async setUser(user: APIUser) {
 		await this.client.redis.set(`users:${user.id}`, JSON.stringify(user));
-	}
-
-	static resolveChannels(channels: Array<APIChannel|Channel>) {
-		return channels.map(channel => {
-			const data: any = {
-				id: channel.id,
-				name: channel.name,
-				type: channel.type,
-			};
-
-			if('nsfw' in channel) {
-				data.nsfw = channel.nsfw ?? false;
-			}
-
-			if('parent_id' in channel) {
-				data.parent_id = channel.parent_id;
-			}
-
-			if('position' in channel) {
-				data.position = channel.position;
-			}
-
-			return data;
-		});
-	}
-	
-	static resolveRoles(roles: Array<APIRole|Role>) {
-		return roles.map(role => {
-			// @ts-ignore
-			delete role.unicode_emoji;
-			// @ts-ignore
-			delete role.icon;
-			// @ts-ignore
-			delete role.tags;
-
-			return role;
-		});
 	}
 }
 
