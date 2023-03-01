@@ -61,7 +61,7 @@ class CacheControl {
 			delete data.referenced_message;
 
 			return data as Message;
-		}))).sort((a, b) => Number(b.timestamp) - Number(a.timestamp)).slice(0, 20);
+		}))).sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)).slice(0, 20);
 
 		await this.client.redis.set(`channels:${channelId}:messages`, JSON.stringify(resolvedMessages));
 	}
