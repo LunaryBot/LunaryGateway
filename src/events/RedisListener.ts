@@ -3,7 +3,7 @@ import EventListener from '@EventListener';
 class RawWSListener extends EventListener {
 	constructor(client: LunaryClient) {
 		// @ts-ignore
-		super(client, ['ready', 'reconnecting', 'error', 'close'], true);
+		super(client, ['ready', 'reconnecting', 'error', 'end'], true);
 	}
 
 	public async onReady() {
@@ -18,7 +18,7 @@ class RawWSListener extends EventListener {
 		logger.error(error, { label: 'Redis' });
 	}
 
-	public async onClose() {
+	public async onEnd() {
 		logger.debug('Redis cache disconnected.', { label: 'Redis' });
 	}
 
@@ -26,10 +26,10 @@ class RawWSListener extends EventListener {
 		this.events.forEach(eventName => {
 			if(this.multipleOnFunctions) {
 				// @ts-ignore
-				this.client.redis.on(eventName, (...args) => this[`on${eventName.toTitleCase()}`](...args));
+				this.client.redis.connection.on(eventName, (...args) => this[`on${eventName.toTitleCase()}`](...args));
 			} else {
 				// @ts-ignore
-				this.client.redis.on(eventName, (...args) => this.on(...args));
+				this.client.redis.connection.on(eventName, (...args) => this.on(...args));
 			}
 		});
 	}

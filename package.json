@@ -7,10 +7,13 @@
     "start": "TS_NODE_BASEURL=./build node -r tsconfig-paths/register ."
   },
   "dependencies": {
+    "@redis/json": "^1.0.4",
+    "@redis/search": "^1.1.2",
     "discord-api-types": "^0.36.2",
     "dotenv": "^16.0.1",
     "eris": "^0.17.1",
     "ioredis": "^5.2.1",
+    "redis": "^4.6.5",
     "winston": "^3.8.1"
   },
   "devDependencies": {

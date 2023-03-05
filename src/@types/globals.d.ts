@@ -11,6 +11,7 @@ declare global {
 
             // Redis
             readonly REDIS_URL: string;
+            readonly CACHE_URL: string;
 
             readonly NODE_ENV: 'development' | 'production';
         }

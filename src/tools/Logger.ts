@@ -17,7 +17,7 @@ const config = {
 		info: 'green',
 		http: 'blue',
 		debug: 'yellow',
-	}
+	},
 };
 
 winston.addColors(config.colors);
@@ -33,7 +33,7 @@ const logger = winston.createLogger({
 				timestamp(),
 				printf(({ level, message, label, timestamp = new Date().toISOString(), details }) => {
 					return `${timestamp} ${level}  ${process.pid} --- ${label ? `[${chalk.cyan(label)}]:` : ''} ${message}${details ? `\n${details}` : ''}`;
-				}),
+				})
 			),
 		}),
 		new winston.transports.File({ 
@@ -43,7 +43,7 @@ const logger = winston.createLogger({
 				timestamp(),
 				printf(({ level, message, label, timestamp = new Date().toISOString(), details }) => {
 					return `${timestamp} ${level}  ${process.pid} --- ${label ? `[${label}]:` : ''} ${message}${details ? `\n${details}` : ''}`;
-				}),
+				})
 			),
 		}),
 	],

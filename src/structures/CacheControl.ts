@@ -63,49 +63,37 @@ class CacheControl {
 			return data as Message;
 		}))).sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)).slice(0, 20);
 
-		await this.client.redis.set(`channels:${channelId}:messages`, JSON.stringify(resolvedMessages));
+		await this.client.cache.set(`channels:${channelId}:messages`, JSON.stringify(resolvedMessages));
 	}
 
 	async deleteGuild(guildId: string) {
-		await this.client.redis.del(`guilds:${guildId}`);
+		await this.client.cache.del(`guilds:${guildId}`);
 	}
 
-	async getGuild(guildId: string): Promise<Guild> {
-		const guild = await this.client.redis.get(`guilds:${guildId}`);
-
-		if(!guild) {
-			return null as any;
-		}
-
-		return JSON.parse(guild);
+	getGuild(guildId: string): Promise<Guild> {
+		return this.client.redis.connection.json.get(`guilds:${guildId}`) as Promise<Guild>;
 	}
 
 	async setGuild(guild: (APIGuild & { channels?: Array<APIChannel> }) | Guild) {
 		const resolvedGuild: Partial<Guild> = GuildSchema.parse(guild) as any;
         
-		await this.client.redis.set(`guilds:${guild.id}`, JSON.stringify(resolvedGuild));
+		await this.client.redis.connection.json.set(`guilds:${guild.id}`, '$', resolvedGuild);
 	}
 
-	async setGuildChannels(guildId: string, channels: Array<APIChannel|Channel>, guild: Guild = null as any) {
-		if(!guild) {
-			guild = await this.getGuild(guildId);
-		}
+	async setGuildChannels(guildId: string, channels: Array<APIChannel|Channel>) {
+		const resolvedChannels = channels.map(channel => ChannelSchema.parse(channel)) as any;
 
-		const resolvedChannels = ChannelSchema.parse(channels) as any;
-
-		guild.channels = resolvedChannels;
-
-		await this.setGuild(guild);
+		await this.client.redis.connection.json.set(`guilds:${guildId}`, '$.channels', resolvedChannels); 
 	}
 
 	async setGuildMember(guildId: string, userId: string, member: APIGuildMember) {
 		delete member.user;
 
-		await this.client.redis.set(`guilds:${guildId}:members:${userId == this.client.user.id ? '@me' : userId}`, JSON.stringify(member));
+		await this.client.cache.set(`guilds:${guildId}:members:${userId == this.client.user.id ? '@me' : userId}`, JSON.stringify(member));
 	}
 	
 	async deleteGuildMember(guildId: string, userId: string) {
-		await this.client.redis.del(`guilds:${guildId}:members:${userId}`);
+		await this.client.cache.del(`guilds:${guildId}:members:${userId}`);
 	}
 
 	async setGuildRoles(guildId: string, roles: Array<APIRole|Role>, guild: Guild = null as any) {
@@ -121,7 +109,7 @@ class CacheControl {
 	}
 
 	async setUser(user: APIUser) {
-		await this.client.redis.set(`users:${user.id}`, JSON.stringify(user));
+		await this.client.cache.set(`users:${user.id}`, JSON.stringify(user));
 	}
 }
 

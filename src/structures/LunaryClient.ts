@@ -1,17 +1,22 @@
 import Eris from 'eris';
 import fs from 'fs';
-import Redis from 'ioredis';
+import _Redis from 'ioredis';
 
 import EventListener from '@EventListener';
 import CacheControl from './CacheControl';
+import { Redis } from './Redis';
 
 class Lunary extends Eris.Client {
 	public events: Array<EventListener> = [];
-	public redis: Redis = new Redis(process.env.REDIS_URL, {
+	public cache: _Redis = new _Redis(process.env.CACHE_URL, {
 		connectTimeout: 3000,
 	});
 
+	public redis: Redis = new Redis(this);
+
 	public cacheControl: CacheControl;
+
+	public devs = ['452618703792766987', '343778106340802580'];
 
 	constructor() {
 		super(
@@ -60,6 +65,8 @@ class Lunary extends Eris.Client {
 
 	async init() {
 		await this._loadListeners();
+
+		await this.redis.connect();
 
 		await this.connect();
 
