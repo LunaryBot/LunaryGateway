@@ -101,7 +101,7 @@ class RawHandles {
 			role = packet.d.role;
 		}
 
-		const roles = ((guild ?? JSON.parse((await this.client.redis.get(`guilds:${guildId}`).catch(() => null) || JSON.stringify({}))) ?? {}).roles ?? []) as Array<APIRole>;
+		const roles = ((guild ?? JSON.parse((await this.client.cache.get(`guilds:${guildId}`).catch(() => null) || JSON.stringify({}))) ?? {}).roles ?? []) as Array<APIRole>;
 
 		const roleIndex = roles.findIndex(r => r.id === role.id);
 
@@ -119,7 +119,7 @@ class RawHandles {
 	public async handleMessage(packet: GatewayMessageEvents) {
 		const { channel_id: channelId, guild_id: guildId, ...message } = packet.d;
 
-		const messages = JSON.parse((await this.client.redis.get(`channels:${channelId}:messages`).catch(() => null) || JSON.stringify([]))) as Array<APIMessage>;
+		const messages = JSON.parse((await this.client.cache.get(`channels:${channelId}:messages`).catch(() => null) || JSON.stringify([]))) as Array<APIMessage>;
 
 		const messageIndex = messages.findIndex(m => m.id === message.id);
 

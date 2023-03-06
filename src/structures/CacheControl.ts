@@ -51,7 +51,7 @@ class CacheControl {
 			delete data.author;
 			
 			delete data.channel_id;
-
+ 
 			delete data.interaction;
 			
 			delete data.member;

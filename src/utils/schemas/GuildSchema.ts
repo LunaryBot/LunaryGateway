@@ -1,6 +1,6 @@
 import Schema from '@utils/Schema';
-import { ChannelSchema } from './ChannelSchema';
 
+import { ChannelSchema } from './ChannelSchema';
 import { RoleSchema } from './RoleSchema';
 
 export const GuildSchema = new Schema({
