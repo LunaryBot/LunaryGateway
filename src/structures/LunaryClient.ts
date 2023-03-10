@@ -4,7 +4,7 @@ import _Redis from 'ioredis';
 
 import EventListener from '@EventListener';
 import CacheControl from './CacheControl';
-import { Redis } from './Redis';
+import { Redis } from './redis';
 
 class Lunary extends Eris.Client {
 	public events: Array<EventListener> = [];
