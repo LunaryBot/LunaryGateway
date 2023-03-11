@@ -46,6 +46,12 @@ export class Redis {
 		return createRedisIndexes(this);
 	}
 
+	async deleteIndexes() {
+		const indexes = await this.connection.ft._list();
+
+		return indexes.map(idx => this.connection.ft.dropIndex(idx));
+	}
+
 	connect() {
 		return this.connection
 			.connect()
