@@ -1,7 +1,7 @@
-import { SchemaType } from '@utils/Schema';
+import { SchemaO } from '@utils/Schema';
 import { MessageMentions } from './MessageMentions';
 
-export const MessageBase: SchemaType = {
+export const MessageBase: SchemaO = {
 	id: String,
 	type: Number,
 	tts: Boolean,

@@ -1,6 +1,8 @@
 import { ChannelSchema, GuildSchema, RoleSchema } from '@utils/schemas';
 import { APIChannel, APIGuild, APIGuildMember, APIMessage, APIRole, APIUser } from 'discord-api-types/v10';
 
+import { MessageSchema } from '@utils/schemas/Message/MessageSchema';
+
 type Channel = Pick<APIChannel, 'id' | 'name' | 'type'> & { position?: number, parent_id?: string, nsfw?: boolean };
 type Guild = Pick<APIGuild, 'id' | 'name' | 'icon' | 'features' | 'banner'> & { owner_id: string, roles: Array<Role>, channels: Array<Channel> };
 type Role = Pick<APIRole, 'id' | 'name' | 'color' | 'hoist' | 'permissions' | 'position'>;
@@ -17,53 +19,58 @@ class CacheControl {
 		});
 	}
 
-	async setChannelMessages(channelId: string, messages: Array<APIMessage & { guild_id?: string, member?: APIGuildMember }>) {
-		const resolvedMessages: Message[] = (await Promise.all(messages.map(async message => {
-			const data = {
-				...message,
-				// @ts-ignore
-				author_id: message.author_id || message.author.id,
-			} as Partial<APIMessage> & { guild_id?: string,  member?: APIGuildMember };
+	async setChannelMessages(channelId: string, message: APIMessage & { guild_id?: string, member?: APIGuildMember }) {
+		const data = {
+			...message,
+			// @ts-ignore
+			author_id: message.author_id || message.author.id,
+		} as Partial<APIMessage> & { guild_id?: string,  member?: APIGuildMember };
 
-			if(message.author) await this.setUser(message.author);
+		if(message.author) await this.setUser(message.author);
 
-			if(message.guild_id && message.member) await this.setGuildMember(message.guild_id, message.author.id, message.member);
+		if(message.guild_id && message.member) await this.setGuildMember(message.guild_id, message.author.id, message.member);
 
-			if(data.referenced_message) {
-				const { referenced_message } = data;
+		if(data.referenced_message) {
+			const { referenced_message } = data;
 
-				data.referenced_message = {
-					content: referenced_message.content,
-					author_id: referenced_message.author.id,
-					attachments: referenced_message.attachments,
-					embeds: referenced_message.embeds,
-					id: referenced_message.id,
-					author: referenced_message.author,
-				} as APIMessage & { author_id: string };
+			data.referenced_message = {
+				content: referenced_message.content,
+				author_id: referenced_message.author.id,
+				attachments: referenced_message.attachments,
+				embeds: referenced_message.embeds,
+				id: referenced_message.id,
+				author: referenced_message.author,
+			} as APIMessage & { author_id: string };
 
-				await this.setUser(referenced_message.author);
-			}
-			
-			delete data.activity;
+			await this.setUser(referenced_message.author);
+		}
+		
+		delete data.activity;
 
-			delete data.application;
+		delete data.application;
 
-			delete data.author;
-			
-			delete data.channel_id;
- 
-			delete data.interaction;
-			
-			delete data.member;
+		delete data.author;
+		
+		delete data.channel_id;
 
-			delete data.nonce;
+		delete data.interaction;
+		
+		delete data.member;
 
-			delete data.referenced_message;
+		delete data.nonce;
 
-			return data as Message;
-		}))).sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)).slice(0, 20);
+		const chachedMessages: { [id: string]: typeof message } = await this.client.redis.connection.json.get(`channels:${channelId}:messages`) as any;
 
-		await this.client.cache.set(`channels:${channelId}:messages`, JSON.stringify(resolvedMessages));
+		if(!chachedMessages) {
+			return await this.client.redis.connection.json.set(`channels:${channelId}:messages`, '$', { [message.id]: data } as any);
+		}
+
+		await this.client.redis.connection.json.set(`channels:${channelId}:messages`, '$', Object.fromEntries(
+			([
+				[data.id, data] as [string, typeof message],
+				...Object.entries(chachedMessages),
+			]).sort(([id, message]) => Date.parse(message.timestamp) - Date.parse(message.timestamp)).slice(0, 20)
+		) as any);
 	}
 
 	async deleteGuild(guildId: string) {

@@ -119,24 +119,24 @@ class RawHandles {
 	public async handleMessage(packet: GatewayMessageEvents) {
 		const { channel_id: channelId, guild_id: guildId, ...message } = packet.d;
 
-		const messages = JSON.parse((await this.client.cache.get(`channels:${channelId}:messages`).catch(() => null) || JSON.stringify([]))) as Array<APIMessage>;
+		const messageIndex = await this.client.redis.connection.json.get(`channels:${channelId}:messages`, {
+			path: `$.${message.id}`,
+		}).then(res => (res as Array<any>)[0]) as any as APIMessage;
 
-		const messageIndex = messages.findIndex(m => m.id === message.id);
+		console.log(messageIndex);
 
-		if(messageIndex === -1 && packet.t != GatewayDispatchEvents.MessageCreate) return;
+		let _message = message as any;
+
+		if(!messageIndex && packet.t != GatewayDispatchEvents.MessageCreate) return;
 
 		let messageFinded = true;
 		
-		if(messageIndex !== -1 || packet.t == GatewayDispatchEvents.MessageCreate) {
+		if(message || packet.t == GatewayDispatchEvents.MessageCreate) {
 			// @ts-ignore
 			message.guild_id = guildId;
 			
-			if(packet.t === GatewayDispatchEvents.MessageCreate) {
-				messages.push(message as APIMessage);
-			} else if(packet.t === GatewayDispatchEvents.MessageUpdate) {
-				messages[messageIndex] = message as APIMessage;
-			} else if(packet.t === GatewayDispatchEvents.MessageDelete) {
-				messages[messageIndex] = { ...messages[messageIndex], deleted: true } as APIMessage;
+			if(packet.t === GatewayDispatchEvents.MessageDelete) {
+				_message = { ...messageIndex, deleted: true } as APIMessage;
 			}
 		} else {
 			messageFinded = false;
@@ -150,7 +150,7 @@ class RawHandles {
 
 		if(!messageFinded) return;
 
-		await this.client.cacheControl.setChannelMessages(channelId, messages);
+		await this.client.cacheControl.setChannelMessages(channelId, _message);
 	}
 
 	public async handleUser(packet: GatewayUserUpdateDispatch) {
